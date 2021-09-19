@@ -1,0 +1,24 @@
+---
+
+- name: Install elasticsearch on DEB distro
+  become: True
+  block:
+  - name: Install required packages
+    ansible.builtin.apt:
+      name:
+        - apt-transport-https
+      state: latest
+  - name: Add elasticsearch gpt key
+    ansible.builtin.apt_key:
+      url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      state: present
+  - name: Add elasticsearch repository
+    ansible.builtin.apt_repository:
+      repo: "deb https://artifacts.elastic.co/packages/{{ es_deb_repository_version }}/apt stable main"
+      state: present
+  - name: Install elasticsearch packages
+    ansible.builtin.apt:
+      name:
+        - "elasticsearch={{ es_deb_package_version }}"
+      state: present
+      update_cache: True

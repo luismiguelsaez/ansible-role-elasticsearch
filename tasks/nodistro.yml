@@ -1,0 +1,66 @@
+---
+
+- name: Initial setup
+  become: True
+  block:
+  - name: Create group
+    ansible.builtin.group:
+      name: elasticsearch
+      gid: 1100
+      state: present
+  - name: Create user
+    ansible.builtin.user:
+      name: elasticsearch
+      uid: 1100
+      groups: elasticsearch
+      home: /usr/share/elasticsearch
+      shell: /usr/bin/false
+      state: present
+  - name: Create home directory
+    ansible.builtin.file:
+      path: /usr/share/elasticsearch
+      state: directory
+      owner: elasticsearch
+      group: elasticsearch
+      mode: 0755
+
+- name: Install elasticsearch package
+  become: True
+  block:
+  - name: Get elasticsearch package
+    ansible.builtin.get_url:
+      url: https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.14.1-linux-x86_64.tar.gz
+      dest: /tmp
+      checksum: sha512:https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.14.1-linux-x86_64.tar.gz.sha512
+  - name: Unarchive package
+    ansible.builtin.unarchive:
+      src: /tmp/elasticsearch-7.14.1-linux-x86_64.tar.gz
+      dest: /tmp
+      remote_src: True
+  - name: Copy installation files
+    ansible.builtin.copy:
+      src: /tmp/elasticsearch-7.14.1/
+      dest: /usr/share/elasticsearch/
+      remote_src: True
+      owner: elasticsearch
+      group: elasticsearch
+
+- name: Configure elasticsearch
+  become: True
+  block:
+  - name: Copy systemd entrypoint file
+    ansible.builtin.template:
+      src: systemd-entrypoint.j2
+      dest: /usr/share/elasticsearch/bin/systemd-entrypoint
+    owner: elasticsearch
+    group: elasticsearch
+    mode: 0755
+  - name: Create systemd unit
+    ansible.builtin.template:
+      src: elasticsearch.j2
+      dest: /usr/lib/systemd/system/elasticsearch.service
+  - name: Enable systemd unit
+    ansible.builtin.service:
+      name: elasticsearch
+      state: started
+      enabled: True
