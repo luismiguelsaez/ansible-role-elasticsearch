@@ -22,3 +22,20 @@
         - "elasticsearch={{ es_deb_package_version }}"
       state: present
       update_cache: True
+  - name: Enable elasticsearch service
+    ansible.builtin.service:
+      name: elasticsearch
+      state: started
+      enabled: True
+
+- name: Verification of running server
+  block:
+  - name: Verify server status
+    ansible.builtin.uri:
+      url: http://localhost:9200
+      remote_src: True
+      return_content: True
+    register: request
+    until: request.status == 200
+    retries: 1
+    delay: 5

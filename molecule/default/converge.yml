@@ -4,4 +4,4 @@
   tasks:
     - name: "Include elasticsearch"
       include_role:
-        name: "elasticsearch"
+        name: "ansible-role-elasticsearch"
